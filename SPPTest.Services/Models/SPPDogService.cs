@@ -33,7 +33,7 @@ namespace SPPTest.Services.Models
             {
                 return default;
             }
-            var dog = await _dogPhotoRepository.GetByBreedAsync(breed);
+            var dog = await _dogPhotoRepository.GetByAsync(x => x.Breed == breed);
             if (dog == null)
             {
                 Console.WriteLine($"Data for breed '{breed}' not found in db");

@@ -1,15 +1,10 @@
-﻿using SPPTest.Domain.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Linq.Expressions;
 
 namespace SPPTest.Repository
 {
     public interface IRepository<T>
-    {      
+    {
         Task AddAsync(T entity);
-        Task<DogPhoto?> GetByBreedAsync(string breed);
+        Task<T?> GetByAsync(Expression<Func<T, bool>> predicate);
     }
 }
