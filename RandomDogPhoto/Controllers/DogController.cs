@@ -18,9 +18,9 @@ namespace SPPTest.WebAPI.Controllers
     {
         private readonly SPPDogService _sppDogService;
         private readonly DogApiService _dogApiService;
-        private readonly CacheService _cacheService;
+        private readonly CacheService<DogPhoto, Cache<DogPhoto>> _cacheService;
 
-        public DogApiController(SPPDogService sppDogService, DogApiService dogApiService, CacheService cacheService)
+        public DogApiController(SPPDogService sppDogService, DogApiService dogApiService, CacheService<DogPhoto, Cache<DogPhoto>> cacheService)
         {
             _dogApiService = dogApiService;
             _sppDogService = sppDogService;
@@ -34,14 +34,15 @@ namespace SPPTest.WebAPI.Controllers
             {
                 return BadRequest("This api method will only accept valid breed names");
             }
-            DogPhoto dogPhoto = await _cacheService.GetDataAsync<DogPhoto,string>(breed);
+            DogPhoto dogPhoto = await _cacheService.GetDataAsync(breed);
+
             if (dogPhoto == null)
             {
-                dogPhoto = await _sppDogService.GetDataAsync<DogPhoto, string>(breed);
+                dogPhoto = await _sppDogService.GetDataAsync(breed);
 
                 if (dogPhoto == null)
                 {
-                    DogData dogData = await _dogApiService.GetDataAsync<DogData, string>(breed);
+                    DogData dogData = await _dogApiService.GetDataAsync(breed);
                     if (dogData == null)
                     {
                         return NotFound();
@@ -51,15 +52,21 @@ namespace SPPTest.WebAPI.Controllers
                         Breed = breed,
                         PhotoUrl = dogData.Message
                     };
-                    await _sppDogService.AddDataAsync<DogPhoto, string>(dogPhoto.PhotoUrl, dogPhoto.Breed, 0);
+                    await _sppDogService.AddDataAsync(dogPhoto);
                 }
-                await _cacheService.AddDataAsync<DogPhoto, string>(breed, dogPhoto);            
+                Cache<DogPhoto> dogPhotoCache = new Cache<DogPhoto>
+                {
+                    Key = dogPhoto.Breed,
+                    Value = dogPhoto
+                };
+
+                await _cacheService.AddDataAsync(dogPhotoCache);
             }
-            
+
 
             return Ok(dogPhoto);
         }
     }
 
-    
+
 }

@@ -1,9 +1,10 @@
 ﻿using SPPTest.Domain.Models;
 using SPPTest.Repository;
+using SPPTest.Shared.Utilities;
 
 namespace SPPTest.Services.Models
 {
-    public class SPPDogService : IApiService
+    public class SPPDogService : IApiService<DogPhoto, string>, IApiAddDataService<DogPhoto, DogPhoto>
     {
         private readonly IRepository<DogPhoto> _dogPhotoRepository;
 
@@ -12,27 +13,31 @@ namespace SPPTest.Services.Models
             _dogPhotoRepository = dogPhotoRepository;
         }
 
-        public async Task<T> AddDataAsync<T, TData>(string photoUrl, string breed, int age) where TData : class
+        public async Task AddDataAsync(DogPhoto dogPhoto)
         {
-            var dog = new DogPhoto
+            if (dogPhoto is null)
             {
-                Breed = breed,
-                PhotoUrl = photoUrl
-            };
-
-            await _dogPhotoRepository.AddAsync(dog);
-           
-            Console.WriteLine($"Data for breed '{breed}' added to db");
-            return (T)(object)dog;
+                throw new ArgumentNullException("Data is null. Null values are not allowed");
+            }            
+            if (!ValidationHelper.IsValidBreedFormat(dogPhoto.Breed))
+            {
+                throw new ArgumentException("Invalid data: Breed contains invalid data: " + dogPhoto.Breed);
+            }
+            await _dogPhotoRepository.AddAsync(dogPhoto);
+            Console.WriteLine($"Data for breed '{dogPhoto}' added to db");
         }
 
-        public async Task<T> GetDataAsync<T, TData>(TData data) where TData : class
+        public async Task<DogPhoto> GetDataAsync(string breed)
         {
-            var breed = data as string;
-            if (string.IsNullOrEmpty(breed))
+            if (breed is null)
             {
-                return default;
+                throw new ArgumentNullException("Data is null. Null values are not allowed");
             }
+            if (!ValidationHelper.IsValidBreedFormat(breed))
+            {
+                throw new ArgumentException("Invalid data: Breed contains invalid data: " + breed);
+            }
+          
             var dog = await _dogPhotoRepository.GetByAsync(x => x.Breed == breed);
             if (dog == null)
             {
@@ -41,7 +46,7 @@ namespace SPPTest.Services.Models
             }
             Console.WriteLine($"Data for breed '{breed}' found in db");
 
-            return (T)(object)dog;
+            return dog;
         }
 
     }

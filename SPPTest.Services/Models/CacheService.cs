@@ -1,23 +1,36 @@
-﻿using SPPTest.Domain.Models;
+﻿using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using SPPTest.Domain.Models;
 using SPPTest.Shared.Utilities;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace SPPTest.Services.Models
 {
-    public class CacheService : IApiService
+    public class CacheService<T,TData> : IApiService<T, string>, IApiAddDataService<T,TData>
     {
-        public async Task<T> GetDataAsync<T, TData>(TData data) where TData : class
+        
+        public async Task AddDataAsync(TData data)
         {
-            var dogPhoto = await CacheHelper<DogPhoto>.GetCachedDataAsync(data as string);
-            return (T)(object)dogPhoto;
-        }
+            Console.WriteLine();
+            if (data is null)
+            {
+                throw new ArgumentNullException("Data is null. Null values are not allowed to be stored in cache");
+            }
+            if (data is not Cache<T>)
+            {
+                throw new ArgumentException("Invalid data Type: " + typeof(T).Name);
+            }
 
-        public async Task<T> AddDataAsync<T, TData>(string key, DogPhoto data) where TData : class
+            await CacheHelper<T>.AddDataAsync(data as Cache<T>);
+        }
+        
+
+        public async Task<T> GetDataAsync(string key)
         {
-            await CacheHelper<DogPhoto>.AddDataAsync(key, data);
-            return (T)(object)data;
+            if (string.IsNullOrEmpty(key))
+            {
+                throw new ArgumentNullException("Key is null or empty. Key is required to get data from cache.");
+            }
+            var result = await CacheHelper<T>.GetCachedDataAsync(key);
+            return result;
         }
     }
 }

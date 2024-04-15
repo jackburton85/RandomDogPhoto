@@ -1,21 +1,21 @@
-﻿using Microsoft.AspNetCore.Mvc.Diagnostics;
-using Microsoft.EntityFrameworkCore;
-using SPPTest.Domain.Models;
-using SPPTest.EFDataAccess;
+﻿using Microsoft.Extensions.Configuration;
 using SPPTest.Shared.Models;
-using System.Text.Json;
-using System.Text.Json.Nodes;
-using System.Text.Json.Serialization;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-
 
 namespace SPPTest.Services.DogApIServices
 {
-    public class DogApiService : IApiService
+    public class DogApiService : IApiService<DogData, string>
     {
-        public async Task<T> GetDataAsync<T, TData>(TData key) where TData : class
+        private readonly HttpClient _httpClient;
+        private readonly IConfiguration _configuration;
+
+        public DogApiService(IHttpClientFactory httpClientFactory, IConfiguration configuration)
         {
-            var breed = key as string;
+            _httpClient = httpClientFactory.CreateClient();
+            _configuration = configuration;
+            _httpClient.BaseAddress = new Uri(_configuration["AppSettings:DogApiBaseUrl"] ?? String.Empty);
+        }
+        public async Task<DogData> GetDataAsync(string breed)
+        {              
             if (!string.IsNullOrEmpty(breed))
             {
                 var names = breed.Split(" ");
@@ -23,8 +23,9 @@ namespace SPPTest.Services.DogApIServices
                 {
                     breed = $"{names[1]}/{names[0]}";
                 }
-                var dogApiClient = new DogApiClient(new HttpClient());
-                var dogData = await dogApiClient.GetRandomPhotoForBreedAsync(breed);
+                var dogApiClient = new ApiClient<string, DogData>(_httpClient);
+
+                var dogData = await dogApiClient.GetDataAsync($"{breed.ToLower() + _configuration["AppSettings:DogApiRandomImagePath"]}");
                 if (dogData == null)
                 {
                     Console.WriteLine($"Data for breed '{breed}' not found in api");
@@ -32,11 +33,11 @@ namespace SPPTest.Services.DogApIServices
                 }
 
                 Console.WriteLine($"Data for breed '{breed}' found in api");
-                return (T)(object)dogData;
+                return dogData;
             }
-       
+
             throw new InvalidOperationException("Unsupported type T");
         }
-                 
+
     }
 }

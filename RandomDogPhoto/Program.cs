@@ -1,5 +1,6 @@
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SPPTest.Domain.Models;
 using SPPTest.EFDataAccess;
@@ -23,16 +24,18 @@ namespace SPPTest
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
-   
+
 
             //add the DbContext
             builder.Services.AddDbContext<DogDbContext>(options =>
                 options.UseSqlite(builder.Configuration.GetConnectionString("WebApiDatabase")));
 
+            builder.Services.AddHttpClient<HttpClient>();
             builder.Services.AddScoped<IRepository<DogPhoto>, DogPhotoRepository>();
             builder.Services.AddScoped<DogApiService, DogApiService>();
             builder.Services.AddScoped<SPPDogService, SPPDogService>();
-            builder.Services.AddScoped<CacheService, CacheService>();
+            builder.Services.AddScoped<CacheService<DogPhoto, DogPhoto>, CacheService<DogPhoto, DogPhoto>>();
+            builder.Services.AddScoped<CacheService<DogPhoto, Cache<DogPhoto>>>();
             //builder.Services.AddScoped<DogApiClient, DogApiClient>();
 
 

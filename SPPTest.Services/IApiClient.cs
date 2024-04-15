@@ -1,6 +1,6 @@
 ﻿namespace SPPTest.Services
 {
-    public interface IApiService<TResult, TData> where TData : class
+    public interface IApiClient<TData, TResult>
     {
         Task<TResult> GetDataAsync(TData data);
     }
